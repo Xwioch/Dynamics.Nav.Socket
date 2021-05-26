@@ -1,0 +1,82 @@
+OBJECT Page 99008 Test Socket
+{
+  OBJECT-PROPERTIES
+  {
+    Date=26/05/21;
+    Time=17:23:17;
+    Modified=Yes;
+    Version List=TDAG53279;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table18004153;
+    PageType=List;
+    SourceTableTemporary=Yes;
+    OnOpenPage=BEGIN
+                 TextNo := 1;
+                 LineNo := 10000;
+               END;
+
+    OnQueryClosePage=BEGIN
+                       CurrPage.ss.StopServer();
+                     END;
+
+  }
+  CONTROLS
+  {
+    { 50000;0  ;Container ;
+                ContainerType=ContentArea }
+
+    { 50003;1  ;Field     ;
+                Name=ss;
+                ControlAddIn=[Dynamics.Nav.Socket;PublicKeyToken=2a72651ea0b8eb13] }
+
+    { 50001;1  ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 50004;2  ;Field     ;
+                SourceExpr="Text No." }
+
+    { 50002;2  ;Field     ;
+                SourceExpr=Text }
+
+  }
+  CODE
+  {
+    VAR
+      TextNo@50000 : Integer;
+      LineNo@50001 : Integer;
+      content@50002 : Text;
+
+    EVENT ss@-50003::AddInReady@5();
+    BEGIN
+      CurrPage.ss.SetParameter('192.168.60.15', 1234);
+      CurrPage.ss.StartServer();
+    END;
+
+    EVENT ss@-50003::DataReceived@6();
+    BEGIN
+      content := CurrPage.ss.GetContent();
+
+      Rec.INIT;
+      Rec."Text No." := 1;
+      Rec."Line No." := LineNo;
+      Rec.Text := content;
+      Rec.INSERT;
+
+      LineNo += 1;
+
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    EVENT ss@-50003::SocketException@7();
+    BEGIN
+      MESSAGE('error from socket control add-in');
+    END;
+
+    BEGIN
+    END.
+  }
+}
+
